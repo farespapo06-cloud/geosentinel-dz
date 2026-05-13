@@ -93,4 +93,32 @@ for d in st.session_state.all_detections:
             <b>Status:</b> Verified via OSINT
         """, max_width=200)
     ).add_to(m)
-                  
+   # 1. إضافة إحداثيات الحدود التقريبية (أو استخدام ملف GeoJSON)
+# سنرسم خطاً يوضح الحدود لتعزيز الطابع الاستراتيجي
+algeria_borders = [
+    [37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], 
+    [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]
+]
+
+# 2. رسم الحدود على الخريطة بلون مميز (أبيض أو ذهبي ليظهر فوق الساتلايت)
+folium.PolyLine(
+    algeria_borders, 
+    color="white", 
+    weight=2, 
+    opacity=0.8,
+    dash_array='5, 5' # خط مقطع ليعطي طابع الخرائط العسكرية
+).add_to(m)
+
+# 3. تعديل منطق "إجراء مسح شامل الآن" ليركز على الحدود الجنوبية
+if st.button("🔍 إجراء مسح شامل الآن", use_container_width=True):
+    # محاكاة رصد في منطقة برج باجي مختار (إحداثيات حقيقية تقريبية)
+    new_target = {
+        "id": len(st.session_state.all_detections) + 1,
+        "lat": random.uniform(21.3, 22.5), # منطقة حدودية جنوبية
+        "lon": random.uniform(0.8, 1.5),
+        "time": datetime.now().strftime("%H:%M:%S"),
+        "type": "Border Activity Detected"
+    }
+    st.session_state.all_detections.append(new_target)
+    st.rerun()
+               
