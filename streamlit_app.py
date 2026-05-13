@@ -3,40 +3,42 @@ import ee
 import folium
 from streamlit_folium import st_folium
 import json
+import re
 
 st.set_page_config(layout="wide")
 st.title("🛡️ نظام رصد الحدود الجزائرية الشامل")
 
+# وظيفة لتطهير البيانات من الرموز التي ظهرت في الصورة 1000046409.jpg
+def sanitize_key(text):
+    if not isinstance(text, str):
+        text = json.dumps(text)
+    # حذف الرمز 147 والرموز غير المرئية الأخرى
+    return re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
+
 if "GCP_SERVICE_ACCOUNT" in st.secrets:
     try:
-        # حل مشكلة الصورة 1000046408.jpg
-        # نحول البيانات إلى نص بصيغة JSON لكي يقبلها النظام كـ Bytes
-        secret_data = st.secrets["GCP_SERVICE_ACCOUNT"]
+        raw_key = st.secrets["GCP_SERVICE_ACCOUNT"]
+        clean_key = sanitize_key(raw_key)
         
-        # إذا كانت البيانات قادمة كقاموس، نحولها لنص
-        if isinstance(secret_data, dict):
-            json_key = json.dumps(secret_data)
-        else:
-            json_key = str(secret_data)
-
-        info = json.loads(json_key)
-        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=json_key)
+        info = json.loads(clean_key)
+        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=clean_key)
         ee.Initialize(credentials)
         
-        st.success("✅ تم تفعيل الرادار الحدودي بنجاح")
+        st.success("✅ تم تفعيل المسح الشامل للحدود الوطنية")
 
-        # رسم كامل الحدود الجزائرية
+        # جلب حدود الجزائر كاملة ورسمها باللون الأحمر العريض
         algeria = ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017").filter(ee.Filter.eq('country_na', 'Algeria'))
-        m = folium.Map(location=[28.0, 2.0], zoom_start=5)
         
+        m = folium.Map(location=[28.0, 2.0], zoom_start=5)
         folium.GeoJson(
             algeria.getInfo(),
-            style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 5}
+            style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 6},
+            name="الحدود الجزائرية"
         ).add_to(m)
         
-        st_folium(m, width="100%", height=600)
-
+        st_folium(m, width="100%", height=700)
+        
     except Exception as e:
-        st.error(f"❌ خطأ تقني: {e}")
+        st.error(f"❌ خطأ تقني في المفتاح: {e}")
 else:
-    st.warning("الرجاء إضافة المفتاح في Secrets")
+    st.info("الرجاء إدخال المفتاح في قسم Secrets لتشغيل الرادار")
