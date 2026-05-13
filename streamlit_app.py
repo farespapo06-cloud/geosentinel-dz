@@ -3,7 +3,7 @@ import folium
 from streamlit_folium import st_folium
 import time
 from datetime import datetime
-# from opensky_api import OpenSkyApi
+# import requests
 # --- 1. بروتوكول GeoSentinel-Auth (نفس إعداداتك) ---
 def check_security():
     if "auth_ok" not in st.session_state:
