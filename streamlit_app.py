@@ -1,20 +1,24 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
+from folium import plugins
 
 # إعداد الصفحة
-st.set_page_config(layout="wide", page_title="GeoSentinel-DZ | Night Vision")
+st.set_page_config(layout="wide", page_title="GeoSentinel-DZ | Tactical Analysis")
 
 # إدارة حالة التهديدات
 if 'threats' not in st.session_state:
     st.session_state.threats = []
 
-# --- القائمة الجانبية ---
+# --- القائمة الجانبية (Sidebar) ---
 with st.sidebar:
     st.header("🚨 أنظمة الرصد المتقدمة")
     radar_scan = st.toggle("🛰️ رادار مسح الحدود", value=True)
     thermal_detect = st.toggle("🌡️ كشف ليلي حراري (Night Vision)")
     track_hidden = st.toggle("👣 ملاحقة المسارات المخفية", value=True)
+    
+    # ميزة قياس المسافات
+    st.info("📏 ميزة 'تحديد المسافة' مفعلة الآن على الخريطة")
     
     st.markdown("---")
     
@@ -28,8 +32,7 @@ with st.sidebar:
 
     show_flights = st.toggle("✈️ رادار الطيران (FlightRadar24)", value=True)
 
-# --- منطق الرؤية الليلية (CSS Filter) ---
-# إذا تم تفعيل الكشف الحراري، نطبق فلتر أخضر على الخريطة
+# --- منطق الرؤية الليلية (CSS) ---
 night_vision_css = """
 <style>
     .night-vision {
@@ -41,44 +44,50 @@ if thermal_detect:
     st.markdown(night_vision_css, unsafe_allow_html=True)
 
 # --- بناء الخريطة ---
-# اختيار نوع الخريطة بناءً على الوضع
-map_tiles = "Esri World Imagery"
-m = folium.Map(location=[28.0, 2.0], zoom_start=5, tiles=map_tiles)
+m = folium.Map(location=[28.0, 2.0], zoom_start=5, tiles="Esri World Imagery")
 
-# 1. رسم الحدود الوطنية
+# 1. إضافة أداة تحديد المسافة (MeasureControl)
+measure_control = plugins.MeasureControl(
+    position='topleft',
+    primary_length_unit='kilometers',
+    secondary_length_unit='miles',
+    primary_area_unit='sqmeters',
+    active_color='#FFFF00',
+    completed_color='#FF0000'
+)
+m.add_child(measure_control)
+
+# 2. رسم الحدود الوطنية
 algeria_border = [
     [37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], 
     [21.0, -4.5], [27.0, -8.5], [35.5, -2.0], [36.5, -1.0], 
     [37.5, 2.0], [38.0, 5.0], [37.0, 8.5]
 ]
-# في وضع الرؤية الليلية نغير لون الحدود للأسود أو الأبيض لتبرز
-border_color = "yellow" if not thermal_detect else "#00FF00" 
+border_color = "#00FF00" if thermal_detect else "yellow"
 folium.PolyLine(algeria_border, color=border_color, weight=4, dash_array='8').add_to(m)
 
-# 2. ملاحقة المسارات المخفية (👣)
+# 3. ملاحقة المسارات (👣)
 if track_hidden:
-    path_color = "purple" if not thermal_detect else "#00FFFF"
+    path_color = "#00FFFF" if thermal_detect else "purple"
     path1 = [[19.2, 3.5], [20.0, 2.8], [21.2, 1.5], [21.8, 0.9]]
     folium.PolyLine(path1, color=path_color, weight=3, dash_array='5').add_to(m)
 
-# 3. إظهار التهديدات وبصمات الحرارة
+# 4. إظهار التهديدات
 for threat in st.session_state.threats:
     popup_text = f"{threat['type']}"
     if thermal_detect:
         popup_text += f" | الحرارة: {threat['temp']}"
     
-    # أيقونات حرارية متوهجة
-    icon_color = 'red' if not thermal_detect else 'orange'
+    icon_color = 'orange' if thermal_detect else 'red'
     folium.Marker(
         location=threat["loc"],
         icon=folium.Icon(color=icon_color, icon=threat['icon'], prefix='fa'),
         popup=popup_text
     ).add_to(m)
 
-# عرض الخريطة داخل div ليتم تطبيق الفلتر عليه
-st.subheader("خريطة الرصد العملياتي - وضع الرؤية الليلية" if thermal_detect else "خريطة الرصد العملياتي")
+# عرض الخريطة
+st.subheader("GeoSentinel-DZ | نظام تحليل المسافات والرصد")
 
-# وضع الخريطة داخل حاوية لتطبيق تأثير Night Vision
 with st.container():
     if thermal_detect:
         st.markdown('<div class="night-vision">', unsafe_allow_html=True)
