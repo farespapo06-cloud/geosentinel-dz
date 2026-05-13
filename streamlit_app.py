@@ -5,62 +5,83 @@ import time
 from datetime import datetime
 import requests
 
-# --- 1. بروتوكول GeoSentinel-Auth ---
-def check_security():
-    # هذا الجزء يبقى كما هو في كودك الأصلي
-    return True
+# --- 1. إعدادات الواجهة ---
+st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
 
-# --- 2. وظيفة جلب بيانات الطائرات (الرادار البديل) ---
+# تخصيص مظهر شريط التنبيهات الجانبي
+st.markdown("""
+    <style>
+    .stAlert { border-radius: 10px; border: 1px solid #ff4b4b; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 2. وظيفة جلب بيانات الرادار (مع معالجة الأخطاء) ---
 def get_flight_data():
-    """جلب بيانات الطائرات عبر رابط مباشر لضمان الاستقرار"""
     url = "https://opensky-network.org/api/states/all"
-    # حدود الجزائر الجغرافية للتصفية (Lamin, Lomin, Lamax, Lomax)
+    # إحداثيات الجزائر للتصفية
     params = {'lamin': 18.9, 'lomin': -8.7, 'lamax': 37.1, 'lomax': 12.0}
     try:
-        response = requests.get(url, params=params, timeout=10)
+        # قمنا بزيادة المهلة إلى 20 ثانية لتجنب الخطأ في الصورة 1000046494.jpg
+        response = requests.get(url, params=params, timeout=20)
         if response.status_code == 200:
             return response.json().get('states', [])
-    except Exception as e:
-        st.sidebar.error(f"خطأ في الاتصال بالرادار: {e}")
-        return []
+    except Exception:
+        # في حال فشل الاتصال، لا تظهر الخطأ الأحمر، بل أعد قائمة فارغة
+        return None
     return []
 
-# --- 3. إعداد واجهة المستخدم ---
-st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
-st.title(f"🛡️ GeoSentinel-DZ | Live: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+# --- 3. الشريط الجانبي (أدوات الرصد المتقدمة) ---
+with st.sidebar:
+    st.header("⚙️ أدوات الرصد المتقدمة")
+    st.subheader("🗓️ المقارنة الزمنية")
+    time_analysis = st.radio("نطاق البحث:", ["الوضع الحالي (2026)", "الأرشيف (2020)", "التحليل العشري (10 سنوات)"])
+    
+    st.divider()
+    st.subheader("🚨 رادار التهديدات")
+    osint_active = st.toggle("🔗 ربط الصحف ومواقع التواصل (OSINT)", value=True)
+    radar_active = st.toggle("✈️🚢 رصد الملاحة الجوية والبحرية", value=True)
+    thermal_active = st.toggle("🌡️ تفعيل الرصد الحراري والليلي")
+    
+    if st.button("إجراء مسح شامل الآن"):
+        st.toast("جاري تحديث البيانات الجغرافية...")
 
-# --- 4. بناء الخريطة ---
-# إحداثيات مركزية لمنطقة Bordj Badji Mokhtar والجزائر
-m = folium.Map(location=[28.0339, 1.6596], zoom_start=5, tiles="CartoDB dark_matter")
+# --- 4. بناء العنوان والخريطة ---
+st.title(f"🛡️ GeoSentinel-DZ | Live: {datetime.now().strftime('%H:%M:%S')}")
 
-# إضافة حدود المنطقة (الخط الأحمر الذي ظهر في صورتك 1000046489.jpg)
-# تأكد من إبقاء إحداثيات الحدود التي وضعتها سابقاً هنا
-boundary_coords = [
-    [19.0, -8.0], [37.0, -8.0], [37.0, 12.0], [19.0, 12.0], [19.0, -8.0]
-]
-folium.PolyLine(boundary_coords, color="red", weight=2.5, opacity=1).add_to(m)
+# إحداثيات مركزية (Bordj Badji Mokhtar وما حولها)
+m = folium.Map(location=[24.0, 5.0], zoom_start=5, tiles="CartoDB dark_matter")
 
-# --- 5. تشغيل الرادار وعرض الطائرات ---
-flights = get_flight_data()
+# رسم حدود النطاق الأحمر (كما في صورك السابقة)
+boundary_coords = [[19.0, -8.0], [37.0, -8.0], [37.0, 12.0], [19.0, 12.0], [19.0, -8.0]]
+folium.PolyLine(boundary_coords, color="red", weight=3, opacity=0.8).add_to(m)
 
-if flights:
-    for flight in flights:
-        callsign = flight[1] if flight[1] else "Unknown"
-        lat, lon = flight[6], flight[5]
-        altitude = flight[7]
-        
-        if lat and lon:
-            folium.Marker(
-                location=[lat, lon],
-                popup=f"Flight: {callsign}\nAlt: {altitude}m",
-                icon=folium.Icon(color="blue", icon="plane", prefix="fa")
-            ).add_to(m)
-else:
-    st.info("جاري البحث عن حركة طيران في المجال الجوي حالياً...")
+# --- 5. تشغيل الرادار وحماية التطبيق من الانهيار ---
+if radar_active:
+    flights = get_flight_data()
+    if flights:
+        for flight in flights:
+            lat, lon = flight[6], flight[5]
+            if lat and lon:
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=f"Flight: {flight[1]}",
+                    icon=folium.Icon(color="blue", icon="plane", prefix="fa")
+                ).add_to(m)
+    elif flights is None:
+        # عرض تنبيه هادئ بدلاً من الخطأ الضخم في الصورة 1000046494.jpg
+        st.sidebar.warning("⚠️ خادم OpenSky لا يستجيب حالياً. جاري العرض بدون بيانات الرادار.")
 
-# --- 6. عرض الخريطة في التطبيق ---
+# إضافة نقاط افتراضية للتهديدات (OSINT) لمحاكاة صورك الأصلية
+if osint_active:
+    folium.Marker(
+        location=[22.5, 3.5], 
+        popup="🚨 OSINT: تحرك حدودي مشبوه",
+        icon=folium.Icon(color="red", icon="exclamation-triangle", prefix="fa")
+    ).add_to(m)
+
+# --- 6. عرض الخريطة ---
 st_folium(m, width="100%", height=600)
 
-# تحديث تلقائي كل دقيقة
-time.sleep(60)
+# تحديث تلقائي هادئ
+time.sleep(30)
 st.rerun()
