@@ -5,108 +5,106 @@ import random
 import pandas as pd
 from datetime import datetime
 
-# 1. إعدادات المنصة
-st.set_page_config(page_title="GeoSentinel-DZ | Sovereign Monitoring", layout="wide")
+# 1. إعدادات المنصة السيادية
+st.set_page_config(page_title="GeoSentinel-DZ | Ultimate Hub", layout="wide")
 
-if 'all_detections' not in st.session_state:
-    st.session_state.all_detections = []
+if 'field_detections' not in st.session_state:
+    st.session_state.field_detections = []
 
-# 2. لوحة التحكم والقفلات (Sidebar)
+# 2. لوحة التحكم الجانبية (Sidebar)
 with st.sidebar:
-    st.title("⚙️ غرفة العمليات")
+    st.title("⚙️ مركز العمليات الموحد")
     
-    # قسم التغيرات التاريخية (منذ 2024)
-    st.subheader("⏳ تحليل زمني")
-    time_analysis = st.select_slider(
-        "تغيرات النشاط منذ:",
-        options=["يناير 2024", "يونيو 2024", "يناير 2025", "الوضع الحالي 2026"]
-    )
+    # القفلة الزمنية (تغيرات المنطقة)
+    st.subheader("⏳ تحليل التغيرات (منذ 2024)")
+    time_node = st.select_slider("الإطار الزمني المختار:", options=["2024", "2025", "2026"])
     
     st.divider()
     
-    # قسم الروابط والذكاء الاصطناعي
-    st.subheader("🔗 روابط استخباراتية حية")
-    st.markdown(f"[✈️ تتبع مباشر (FlightRadar)](https://www.flightradar24.com/34.0,3.0/6)")
-    st.markdown(f"[🚢 حركة السفن (MarineTraffic)](https://www.marinetraffic.com/)")
-    st.markdown(f"[📡 صور الأقمار (Sentinel)](https://apps.sentinel-hub.com/)")
-    
-    st.divider()
-    
-    # إعادة القفلات (أنظمة الرصد)
+    # قفلات أنظمة الرصد
     st.subheader("🚨 أنظمة الرصد النشطة")
-    radar_active = st.toggle("🛰️ رادار محلي (مستجيب)", value=True)
-    thermal_active = st.toggle("🌡️ رصد حراري (الأشعة تحت الحمراء)")
+    radar_active = st.toggle("🛰️ تفعيل المسح الراداري", value=True)
+    marine_active = st.toggle("🚢 رصد النشاط البحري", value=True)
     
-    if st.button("🔍 مسح ميداني شامل", use_container_width=True):
-        # مصفوفة التهديدات مع الصور الاستخباراتية الحديثة
-        threats = {
-            "دورية مراقبة": {"color": "blue", "icon": "shield", "img": "https://img.freepik.com/free-photo/soldier-patrol-desert_181624-345.jpg"},
-            "عربة مشبوهة": {"color": "red", "icon": "warning", "img": "https://img.freepik.com/free-photo/military-convoy-dust_181624-987.jpg"},
-            "طائرة بدون طيار": {"color": "orange", "icon": "plane", "img": "https://img.freepik.com/free-photo/military-drone-flight_181624-1122.jpg"},
-            "نشاط بحري غير مصنف": {"color": "darkblue", "icon": "anchor", "img": "https://img.freepik.com/free-photo/navy-ship-horizon_181624-4455.jpg"}
+    # زر رصد التغيرات الميدانية (حفر، مطار، خندق، ثكنة)
+    if st.button("🛰️ مسح التغيرات الميدانية", use_container_width=True):
+        terrains = {
+            "مطار عسكري مستحدث": {"color": "red", "img": "https://img.freepik.com/free-photo/aerial-view-airport_181624-2345.jpg"},
+            "خندق دفاعي / سواتر": {"color": "orange", "img": "https://img.freepik.com/free-photo/trench-warfare-desert_181624-789.jpg"},
+            "ثكنة / قاعدة عمليات": {"color": "darkred", "img": "https://img.freepik.com/free-photo/military-base-aerial_181624-1122.jpg"},
+            "حفر / أشغال هندسية": {"color": "yellow", "img": "https://img.freepik.com/free-photo/excavation-site-desert_181624-556.jpg"}
         }
-        
-        name, info = random.choice(list(threats.items()))
-        
-        # توزيع الأهداف (بري جنوبي / بحري شمالي)
-        is_sea = "بحري" in name
-        lat = random.uniform(36.5, 38.0) if is_sea else random.uniform(21.0, 28.0)
-        lon = random.uniform(2.0, 8.0) if is_sea else random.uniform(-1.0, 6.0)
-
-        new_target = {
-            "ID": f"OP-{random.randint(1000, 9999)}",
-            "النوع": name,
-            "LAT": round(lat, 4), "LON": round(lon, 4),
-            "الوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        name, info = random.choice(list(terrains.items()))
+        target = {
+            "ID": f"TR-{random.randint(100, 999)}",
+            "التغيير": name,
+            "LAT": round(random.uniform(22.0, 32.0), 4),
+            "LON": round(random.uniform(1.0, 6.0), 4),
+            "الوقت": datetime.now().strftime("%d-%m-%Y %H:%M"),
             "color": info['color'],
-            "icon": info['icon'],
             "image": info['img']
         }
-        st.session_state.all_detections.append(new_target)
+        st.session_state.field_detections.append(target)
         st.rerun()
 
-# 3. العرض الرئيسي (Main Screen)
-st.success(f"✅ النظام نشط ومستجيب | تحليل البيانات: {time_analysis}")
+    st.divider()
+    if st.button("🗑️ مسح سجلات الرصد"):
+        st.session_state.field_detections = []
+        st.rerun()
 
-# شريط الأخبار العاجلة
-st.info("📢 **آخر الأنباء:** رصد تحركات روتينية على الحدود الجنوبية | استقرار حركة الملاحة الجوية فوق الأطلس.")
+# 3. واجهة العرض الرئيسية (Main Interface)
+st.success(f"✅ رصد التغيرات نشط | رادار الطيران (Flight) متصل | رادار السفن (Marine) متصل")
 
-# الخريطة العملياتية
-m = folium.Map(
-    location=[28.0, 3.0], zoom_start=5,
-    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attr="Esri Satellite"
-)
+# تقسيم الشاشة: خريطة الميدان (يسار) | الرادارات الحية (يمين)
+col_main, col_live = st.columns([2, 1])
 
-# رسم الحدود السيادية
-algeria_borders = [[37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]]
-folium.PolyLine(algeria_borders, color="white", weight=2, dash_array='5, 5').add_to(m)
+with col_main:
+    st.subheader("🗺️ خريطة الرصد وتغيرات الأرض")
+    # الخريطة بنمط الدوائر الرادارية كما في 1000046563.jpg
+    m = folium.Map(
+        location=[28.0, 3.0], zoom_start=5,
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Esri Satellite"
+    )
 
-# عرض الأهداف مع خاصية "الرؤية العميقة" (الصورة عند الضغط)
-for d in st.session_state.all_detections:
-    # محتوى النافذة المنبثقة (HTML)
-    popup_content = f"""
-    <div style="width: 200px; font-family: 'Arial';">
-        <h4 style="margin:0; color:{d['color']};">{d['النوع']}</h4>
-        <hr style="margin:5px 0;">
-        <img src="{d['image']}" width="100%" style="border-radius: 5px; margin-bottom: 5px;">
-        <p style="font-size: 12px; margin:0;"><b>المعرف:</b> {d['ID']}</p>
-        <p style="font-size: 12px; margin:0;"><b>الوقت:</b> {d['الوقت']}</p>
-        <p style="font-size: 10px; color: grey;">* صورة حديثة من أقمار Sentinel</p>
-    </div>
-    """
+    # الحدود السيادية
+    algeria_borders = [[37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]]
+    folium.PolyLine(algeria_borders, color="white", weight=2, dash_array='5, 5').add_to(m)
+
+    # عرض التغيرات كدوائر رادارية (رؤية التهديد بالصور عند الضغط)
+    for d in st.session_state.field_detections:
+        popup_html = f"""
+        <div style="width: 180px; text-align: center; font-family: Arial;">
+            <b style="color:{d['color']}; font-size: 14px;">{d['التغيير']}</b><br>
+            <img src="{d['image']}" width="100%" style="border-radius: 8px; margin: 5px 0;">
+            <p style="font-size: 11px; margin:0;"><b>ID:</b> {d['ID']} | {d['الوقت']}</p>
+        </div>
+        """
+        folium.CircleMarker(
+            location=[d["LAT"], d["LON"]],
+            radius=15, color=d["color"], weight=3,
+            fill=True, fill_color=d["color"], fill_opacity=0.4,
+            popup=folium.Popup(popup_html, max_width=250)
+        ).add_to(m)
+
+    st_folium(m, width="100%", height=600, key="radar_vFinal_Sovereign")
+
+with col_live:
+    # رادار الطيران الحي (FlightRadar)
+    st.subheader("✈️ رادار الطيران")
+    flight_url = "https://www.flightradar24.com/simple_index.php?lat=28.0&lon=3.0&z=5"
+    st.components.v1.iframe(flight_url, height=300)
     
-    folium.Marker(
-        location=[d["LAT"], d["LON"]],
-        icon=folium.Icon(color=d["color"], icon=d["icon"], prefix='fa'),
-        popup=folium.Popup(popup_content, max_width=250)
-    ).add_to(m)
+    st.divider()
+    
+    # رادار السفن الحي (Marine Traffic)
+    st.subheader("🚢 رادار الملاحة البحرية")
+    marine_url = "https://www.marinetraffic.com/en/ais/embed/zoom:5/centery:37.0/centerx:4.0/maptype:4/shownames:false/mmsi:0/shipid:0/fleet:/fleet_id:/vessel:0/container:true/show_menu:false"
+    st.components.v1.iframe(marine_url, height=300)
 
-st_folium(m, width="100%", height=500, key="v_sovereign_2026")
-
-# 4. سجل التهديدات المصنف
-if st.session_state.all_detections:
+# 4. جدول البيانات التفصيلي
+if st.session_state.field_detections:
     st.markdown("---")
-    st.subheader("📋 سجل الرصد الاستخباري")
-    df = pd.DataFrame(st.session_state.all_detections)
-    st.dataframe(df[['ID', 'النوع', 'LAT', 'LON', 'الوقت']], use_container_width=True)
+    st.subheader("📋 سجل تحليل التغيرات الميدانية")
+    df = pd.DataFrame(st.session_state.field_detections)
+    st.dataframe(df[['ID', 'التغيير', 'LAT', 'LON', 'الوقت']], use_container_width=True)
