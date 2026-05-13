@@ -97,3 +97,17 @@ if st.sidebar.button("تشغيل المسح الاستراتيجي"):
 
 # عرض الخريطة كما تظهر في صورتك 1000046392.jpg
 st_folium(m, width="100%", height=600)
+import streamlit as st
+import ee
+import folium
+from streamlit_folium import st_folium
+import json
+
+# الاتصال بالرادار
+if "GCP_SERVICE_ACCOUNT" in st.secrets:
+    info = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+    credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=st.secrets["GCP_SERVICE_ACCOUNT"])
+    ee.Initialize(credentials)
+    st.success("✅ تم الاتصال برادار غوغل إيرث بنجاح")
+else:
+    st.error("❌ مفتاح التشغيل غير موجود")
