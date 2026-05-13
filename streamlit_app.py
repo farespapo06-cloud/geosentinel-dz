@@ -38,3 +38,4 @@ folium.Marker([21.328, 0.924], popup="برج باجي مختار", icon=folium.I
 
 folium.LayerControl().add_to(m)
 st_folium(m, width="100%", height=600)
+folium.Marker([خط_العرض, خط_الطول], popup="نقطة مشبوهة", icon=folium.Icon(color='orange', icon='warning')).add_to(m)
