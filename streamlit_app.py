@@ -3,43 +3,47 @@ import ee
 import folium
 from streamlit_folium import st_folium
 import json
+import re
 
 st.set_page_config(layout="wide")
 st.title("🛡️ نظام رصد الحدود الجزائرية الشامل")
 
+def deep_clean_json(text):
+    """حذف الرمز 147 وأي رموز تحكم مخفية تظهر في الصور"""
+    if not isinstance(text, str):
+        text = json.dumps(text)
+    # حذف الرموز غير المرئية ورموز UTF-8 المزعجة
+    clean = re.sub(r'[^\x20-\x7E]', '', text)
+    return clean
+
 if "GCP_SERVICE_ACCOUNT" in st.secrets:
     try:
-        secret_data = st.secrets["GCP_SERVICE_ACCOUNT"]
+        # قراءة وتطهير المفتاح
+        raw_input = st.secrets["GCP_SERVICE_ACCOUNT"]
+        cleaned_json = deep_clean_json(raw_input)
         
-        # حل مشكلة الصورة 1000046413.jpg (تحويل القاموس إلى نص)
-        if isinstance(secret_data, dict):
-            json_key = json.dumps(secret_data)
-        else:
-            json_key = str(secret_data)
-
-        # تهيئة النظام
-        info = json.loads(json_key)
-        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=json_key)
+        # تحويل النص النظيف إلى JSON
+        info = json.loads(cleaned_json)
+        
+        # تهيئة الاتصال بمحرك Google Earth
+        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=cleaned_json)
         ee.Initialize(credentials)
         
-        st.success("✅ تم تفعيل الرادار وتغطية كامل الحدود الوطنية")
+        st.success("✅ تم تطهير النظام وتفعيل رادار الحدود الوطنية")
 
-        # جلب الحدود الجزائرية كاملة من قاعدة البيانات الرسمية
+        # جلب ورسم حدود الجزائر كاملة
         algeria = ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017").filter(ee.Filter.eq('country_na', 'Algeria'))
         
-        # إعداد الخريطة لتشمل كامل القطر الوطني
         m = folium.Map(location=[28.0, 2.0], zoom_start=5)
-        
-        # رسم الحدود باللون الأحمر العريض لتكون واضحة
         folium.GeoJson(
             algeria.getInfo(),
             style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 5},
-            name="الحدود الجزائرية"
+            name="الحدود الوطنية"
         ).add_to(m)
         
-        st_folium(m, width="100%", height=600)
-
+        st_folium(m, width="100%", height=700)
+        
     except Exception as e:
-        st.error(f"❌ خطأ تقني في قراءة المفتاح: {e}")
+        st.error(f"❌ خطأ تقني مستمر: {e}")
 else:
-    st.info("الرجاء التأكد من حفظ المفتاح في قسم Secrets")
+    st.info("الرجاء إدخال المفتاح في قسم Secrets لتشغيل الرادار")
