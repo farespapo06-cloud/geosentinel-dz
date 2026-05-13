@@ -3,54 +3,43 @@ import ee
 import folium
 from streamlit_folium import st_folium
 import json
-import re
 
-st.set_page_config(layout="wide", page_title="GeoSentinel-DZ")
+st.set_page_config(layout="wide")
 st.title("🛡️ نظام رصد الحدود الجزائرية الشامل")
 
-# ضع نص المفتاح الخاص بك هنا بين علامات الاقتباس الثلاثة
-KEY_DATA = """
-{
-  "type": "service_account",
-  "project_id": "static-lens-496201-p5",
-  "private_key_id": "......",
-  "private_key": "-----BEGIN PRIVATE KEY-----\n......\n-----END PRIVATE KEY-----\n",
-  "client_email": "......",
-  "client_id": "......",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "......"
-}
-"""
-
-def start_system():
+if "GCP_SERVICE_ACCOUNT" in st.secrets:
     try:
-        # تطهير المفتاح من الرمز 147 المذكور في الصورة 1000046412.jpg
-        clean_key = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', KEY_DATA)
-        info = json.loads(clean_key)
+        secret_data = st.secrets["GCP_SERVICE_ACCOUNT"]
         
-        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=clean_key)
+        # حل مشكلة الصورة 1000046413.jpg (تحويل القاموس إلى نص)
+        if isinstance(secret_data, dict):
+            json_key = json.dumps(secret_data)
+        else:
+            json_key = str(secret_data)
+
+        # تهيئة النظام
+        info = json.loads(json_key)
+        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=json_key)
         ee.Initialize(credentials)
-        return True
+        
+        st.success("✅ تم تفعيل الرادار وتغطية كامل الحدود الوطنية")
+
+        # جلب الحدود الجزائرية كاملة من قاعدة البيانات الرسمية
+        algeria = ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017").filter(ee.Filter.eq('country_na', 'Algeria'))
+        
+        # إعداد الخريطة لتشمل كامل القطر الوطني
+        m = folium.Map(location=[28.0, 2.0], zoom_start=5)
+        
+        # رسم الحدود باللون الأحمر العريض لتكون واضحة
+        folium.GeoJson(
+            algeria.getInfo(),
+            style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 5},
+            name="الحدود الجزائرية"
+        ).add_to(m)
+        
+        st_folium(m, width="100%", height=600)
+
     except Exception as e:
-        st.error(f"❌ خلل فني: {e}")
-        return False
-
-if start_system():
-    st.success("✅ تم تفعيل الرادار وتغطية كامل الحدود الوطنية")
-
-    # جلب الحدود الجزائرية كاملة
-    algeria = ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017").filter(ee.Filter.eq('country_na', 'Algeria'))
-    
-    # خريطة مركزة على الجزائر
-    m = folium.Map(location=[28.0, 2.0], zoom_start=5)
-    
-    # رسم الحدود باللون الأحمر العريض
-    folium.GeoJson(
-        algeria.getInfo(),
-        style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 5},
-        name="الحدود الجزائرية"
-    ).add_to(m)
-    
-    st_folium(m, width="100%", height=700)
+        st.error(f"❌ خطأ تقني في قراءة المفتاح: {e}")
+else:
+    st.info("الرجاء التأكد من حفظ المفتاح في قسم Secrets")
