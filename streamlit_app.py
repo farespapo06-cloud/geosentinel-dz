@@ -3,7 +3,6 @@ import folium
 from streamlit_folium import st_folium
 import time
 from datetime import datetime
-# from opensky_api import OpenSkyApi  # تأكد من تثبيت المكتبة: pip install opensky-api
 # from opensky_api import OpenSkyApi
 # --- 1. بروتوكول GeoSentinel-Auth (نفس إعداداتك) ---
 def check_security():
