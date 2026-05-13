@@ -3,47 +3,45 @@ import ee
 import folium
 from streamlit_folium import st_folium
 import json
-import re
 
 st.set_page_config(layout="wide")
 st.title("🛡️ نظام رصد الحدود الجزائرية الشامل")
 
-def deep_clean_json(text):
-    """حذف الرمز 147 وأي رموز تحكم مخفية تظهر في الصور"""
-    if not isinstance(text, str):
-        text = json.dumps(text)
-    # حذف الرموز غير المرئية ورموز UTF-8 المزعجة
-    clean = re.sub(r'[^\x20-\x7E]', '', text)
-    return clean
-
 if "GCP_SERVICE_ACCOUNT" in st.secrets:
     try:
-        # قراءة وتطهير المفتاح
-        raw_input = st.secrets["GCP_SERVICE_ACCOUNT"]
-        cleaned_json = deep_clean_json(raw_input)
+        secret_content = st.secrets["GCP_SERVICE_ACCOUNT"]
         
-        # تحويل النص النظيف إلى JSON
-        info = json.loads(cleaned_json)
-        
-        # تهيئة الاتصال بمحرك Google Earth
-        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=cleaned_json)
+        # علاج مشكلة الصورة 1000046416.jpg
+        # إذا وصل المفتاح كقاموس، نحوله لنص JSON
+        if isinstance(secret_content, dict):
+            json_key = json.dumps(secret_content)
+        else:
+            json_key = str(secret_content)
+
+        # تحويل النص لقاموس للتحقق، ثم استخدامه في تسجيل الدخول
+        info = json.loads(json_key)
+        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=json_key)
         ee.Initialize(credentials)
         
-        st.success("✅ تم تطهير النظام وتفعيل رادار الحدود الوطنية")
+        st.success("✅ تم تفعيل الرادار الحدودي بنجاح")
 
-        # جلب ورسم حدود الجزائر كاملة
+        # جلب الحدود الجزائرية كاملة من قاعدة بيانات LSIB
         algeria = ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017").filter(ee.Filter.eq('country_na', 'Algeria'))
         
+        # خريطة تغطي كامل القطر الوطني
         m = folium.Map(location=[28.0, 2.0], zoom_start=5)
+        
+        # رسم الحدود باللون الأحمر العريض (السمك: 5)
         folium.GeoJson(
             algeria.getInfo(),
-            style_function=lambda x: {'fillColor': '#ff000011', 'color': 'red', 'weight': 5},
-            name="الحدود الوطنية"
+            style_function=lambda x: {'fillColor': '#ff000005', 'color': 'red', 'weight': 5},
+            name="الحدود الوطنية الجزائرية"
         ).add_to(m)
         
-        st_folium(m, width="100%", height=700)
-        
+        # عرض الخريطة لتملأ الشاشة
+        st_folium(m, width="100%", height=600)
+
     except Exception as e:
-        st.error(f"❌ خطأ تقني مستمر: {e}")
+        st.error(f"❌ خلل في قراءة البيانات: {e}")
 else:
-    st.info("الرجاء إدخال المفتاح في قسم Secrets لتشغيل الرادار")
+    st.info("الرجاء التأكد من وجود المفتاح في إعدادات Secrets")
