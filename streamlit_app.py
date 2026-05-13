@@ -39,3 +39,15 @@ if st.sidebar.button("تشغيل كاشف التغيرات"):
 st_folium(m, width="100%", height=600)
 
 st.info("ملاحظة: هذا النظام يراقب 'المناطق الميتة' عبر مقارنة البصمة الرادارية.")
+import streamlit as st
+import ee
+import json
+
+# جلب المفتاح السري الذي وضعته في الصورة 1000046389.jpg
+if "GCP_SERVICE_ACCOUNT" in st.secrets:
+    info = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+    credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=st.secrets["GCP_SERVICE_ACCOUNT"])
+    ee.Initialize(credentials)
+    st.success("✅ تم الاتصال برادار غوغل إيرث بنجاح")
+else:
+    st.error("❌ لم يتم العثور على مفتاح التشغيل")
