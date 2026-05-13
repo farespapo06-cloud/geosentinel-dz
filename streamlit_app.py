@@ -5,14 +5,14 @@ import random
 import pandas as pd
 from datetime import datetime
 
-# إعدادات الصفحة الاحترافية
+# 1. إعدادات الصفحة الاحترافية (GeoSentinel-DZ)
 st.set_page_config(page_title="GeoSentinel-DZ | Strategic Command", layout="wide")
 
-# 1. تهيئة مخازن البيانات (التراكم اليدوي)
+# 2. تهيئة مخازن البيانات (التراكم اليدوي للأهداف)
 if 'all_detections' not in st.session_state:
     st.session_state.all_detections = []
 
-# 2. القائمة الجانبية: لوحة التحكم الاستراتيجية (كما في 1000046506_2.jpg)
+# 3. لوحة التحكم الاستراتيجي (القائمة الجانبية)
 with st.sidebar:
     st.title("⚙️ لوحة التحكم الاستراتيجي")
     
@@ -28,15 +28,15 @@ with st.sidebar:
     
     st.divider()
     
-    # زر المسح اليدوي (كما طلبت)
+    # أزرار التحكم اليدوية (صور 1000046550.jpg)
     if st.button("🔍 إجراء مسح شامل الآن", use_container_width=True):
-        # إضافة هدف افتراضي لمحاكاة الرصد اليدوي
+        # محاكاة رصد هدف جديد في منطقة استراتيجية (مثل برج باجي مختار)
         new_target = {
             "id": len(st.session_state.all_detections) + 1,
-            "lat": random.uniform(21.0, 26.0),
-            "lon": random.uniform(0.0, 5.0),
+            "lat": random.uniform(21.5, 23.0), 
+            "lon": random.uniform(0.5, 2.0),
             "time": datetime.now().strftime("%H:%M:%S"),
-            "type": "Target Detected"
+            "type": "Border Activity Detected" if not thermal_active else "Thermal Signature"
         }
         st.session_state.all_detections.append(new_target)
         st.rerun()
@@ -45,80 +45,44 @@ with st.sidebar:
         st.session_state.all_detections = []
         st.rerun()
 
-# 3. عرض حالة الخادم (كما في 1000046496_2.jpg)
+# 4. واجهة العرض الرئيسية
 if air_active:
-    st.warning("⚠️ لا يستجيب حالياً OpenSky خادم. جاري العرض بدون بيانات الرادار الحي.")
+    st.warning("⚠️ خادم OpenSky لا يستجيب حالياً. جاري العرض بدون بيانات الرادار الحي.")
 
-# 4. بناء الخريطة وتثبيت الأهداف (تطوير صور 1000046544.jpg)
 st.subheader(f"🗺️ خريطة الرصد العملياتي - {period}")
 
-# استخدام إحداثيات الجزائر كمركز
-m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr="Esri")
+# 5. بناء الخريطة (Satellite View)
+# مركز الخريطة على الجزائر
+m = folium.Map(
+    location=[28.0, 3.0], 
+    zoom_start=5, 
+    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 
+    attr="Esri Satellite"
+)
 
-# تثبيت الأهداف التراكمية
-for d in st.session_state.all_detections:
-    folium.CircleMarker(
-        location=[d["lat"], d["lon"]],
-        radius=10,
-        color="red",
-        fill=True,
-        fill_color="yellow",
-        popup=f"ID: {d['id']} | Time: {d['time']}"
-    ).add_to(m)
-
-# عرض الخريطة مع منع الوميض الأبيض
-st_folium(m, width="100%", height=500, key="strategic_map", returned_objects=[])
-
-# 5. سجل الأهداف (Table View)
-if st.session_state.all_detections:
-    st.markdown("### 📋 سجل الأهداف المرصودة")
-    df = pd.DataFrame(st.session_state.all_detections)
-    st.dataframe(df[['id', 'time', 'lat', 'lon', 'type']], use_container_width=True)
-# هذا الكود يضاف داخل حلقة (for d in st.session_state.all_detections)
-for d in st.session_state.all_detections:
-    # تخصيص لون بناءً على نوع الرصد (OSINT أو حراري)
-    marker_color = "red" if not thermal_active else "orange"
-    
-    folium.CircleMarker(
-        location=[d["lat"], d["lon"]],
-        radius=12,
-        color=marker_color,
-        fill=True,
-        fill_color="yellow",
-        # إضافة معلومات تفصيلية تظهر عند النقر (Popup)
-        popup=folium.Popup(f"""
-            <b>Target ID:</b> {d['id']}<br>
-            <b>Time:</b> {d['time']}<br>
-            <b>Coordinates:</b> {round(d['lat'],2)}, {round(d['lon'],2)}<br>
-            <b>Status:</b> Verified via OSINT
-        """, max_width=200)
-    ).add_to(m)
-   # 1. إضافة إحداثيات الحدود التقريبية (أو استخدام ملف GeoJSON)
-# سنرسم خطاً يوضح الحدود لتعزيز الطابع الاستراتيجي
+# إضافة خط الحدود السيادية (الطبقة الحدودية البيضاء)
 algeria_borders = [
     [37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], 
     [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]
 ]
+folium.PolyLine(algeria_borders, color="white", weight=2, opacity=0.7, dash_array='5, 5').add_to(m)
 
-# 2. رسم الحدود على الخريطة بلون مميز (أبيض أو ذهبي ليظهر فوق الساتلايت)
-folium.PolyLine(
-    algeria_borders, 
-    color="white", 
-    weight=2, 
-    opacity=0.8,
-    dash_array='5, 5' # خط مقطع ليعطي طابع الخرائط العسكرية
-).add_to(m)
+# تثبيت الأهداف المرصودة على الخريطة (صور 1000046551.jpg)
+for d in st.session_state.all_detections:
+    folium.CircleMarker(
+        location=[d["lat"], d["lon"]],
+        radius=12,
+        color="red",
+        fill=True,
+        fill_color="yellow",
+        popup=f"Target ID: {d['id']}\nTime: {d['time']}\nType: {d['type']}"
+    ).add_to(m)
 
-# 3. تعديل منطق "إجراء مسح شامل الآن" ليركز على الحدود الجنوبية
-if st.button("🔍 إجراء مسح شامل الآن", use_container_width=True):
-    # محاكاة رصد في منطقة برج باجي مختار (إحداثيات حقيقية تقريبية)
-    new_target = {
-        "id": len(st.session_state.all_detections) + 1,
-        "lat": random.uniform(21.3, 22.5), # منطقة حدودية جنوبية
-        "lon": random.uniform(0.8, 1.5),
-        "time": datetime.now().strftime("%H:%M:%S"),
-        "type": "Border Activity Detected"
-    }
-    st.session_state.all_detections.append(new_target)
-    st.rerun()
-               
+# عرض الخريطة ومنع الوميض الأبيض (Flicker Fix)
+st_folium(m, width="100%", height=550, key="strategic_map_v3", returned_objects=[])
+
+# 6. سجل الأهداف الرقمي (الجدول السفلي)
+if st.session_state.all_detections:
+    st.markdown("### 📋 سجل الأهداف المرصودة (تراكمي)")
+    df = pd.DataFrame(st.session_state.all_detections)
+    st.dataframe(df[['id', 'time', 'lat', 'lon', 'type']], use_container_width=True)
