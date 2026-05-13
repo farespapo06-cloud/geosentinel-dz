@@ -57,3 +57,13 @@ st_folium(
 # عرض الجدول أسفل الخريطة (كما في صورك)
 if st.session_state.all_detections:
     st.write(f"✅ تم تثبيت {len(st.session_state.all_detections)} أهداف على الرادار.")
+# إضافة سجل نصي أسفل الخريطة لتوثيق الأهداف المرصودة تراكمياً
+import pandas as pd
+
+if st.session_state.all_detections:
+    st.markdown("### 📜 سجل الرصد الاستخباراتي")
+    # تحويل البيانات إلى جدول منظم
+    df = pd.DataFrame(st.session_state.all_detections, columns=['Latitude', 'Longitude'])
+    df['Status'] = 'Active Scan'
+    st.table(df) # يعرض الأهداف بشكل ثابت ومنظم
+    
