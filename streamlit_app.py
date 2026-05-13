@@ -2,40 +2,53 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 
-st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
+# Page Setup
+st.set_page_config(page_title="GeoSentinel-DZ Intelligence", layout="wide")
 
-st.title("🛰️ GeoSentinel-DZ: نظام مراقبة الحدود الوطنية")
-st.write("عرض شامل لكامل الشريط الحدودي للجمهورية الجزائرية")
+st.title("🛰️ GeoSentinel-DZ Intelligence")
+st.sidebar.title("Control Panel")
 
-# ضبط الخريطة لتشمل كامل الجزائر (إحداثيات مركزية وزووم مناسب)
-m = folium.Map(location=[28.0339, 1.6596], zoom_start=5, tiles="OpenStreetMap")
+# 1. Satellite vs Standard Toggle
+map_mode = st.sidebar.selectbox("Vision Mode", ["Satellite", "Standard Map"])
 
-# قائمة ببعض النقاط الحدودية الاستراتيجية (يمكنك إضافة المزيد)
-border_points = [
-    {"name": "الحدود الغربية (مغنية)", "loc": [34.845, -1.728]},
-    {"name": "الحدود الجنوبية الغربية (تندوف)", "loc": [27.671, -8.147]},
-    {"name": "الحدود الجنوبية (برج باجي مختار)", "loc": [21.328, 0.924]},
-    {"name": "الحدود الجنوبية الشرقية (إن قزام)", "loc": [19.572, 5.769]},
-    {"name": "الحدود الشرقية (الدبداب)", "loc": [30.151, 9.458]},
-    {"name": "الحدود الشمالية الشرقية (القالة)", "loc": [36.895, 8.443]}
-]
+# 2. Intelligence News Feed (Simulated for Now)
+st.sidebar.markdown("---")
+st.sidebar.subheader("🗞️ Global News Radar")
+st.sidebar.warning("Live Alerts: Algeria Borders")
+st.sidebar.write("- **Reuters:** Security monitoring increased in the Sahel region.")
+st.sidebar.write("- **AP:** Analysis of regional logistics movements.")
 
-# إضافة النقاط إلى الخريطة
-for point in border_points:
-    folium.Marker(
-        location=point["loc"],
-        popup=point["name"],
-        icon=folium.Icon(color="red", icon="info-sign")
+# Center the map on Algeria
+m = folium.Map(location=[28.0339, 1.6596], zoom_start=5)
+
+# 3. Enable Google Satellite View
+if map_mode == "Satellite":
+    google_sat = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+    folium.TileLayer(
+        tiles=google_sat,
+        attr='Google Satellite',
+        name='Satellite',
+        overlay=False,
+        control=True
     ).add_to(m)
 
-# رسم خط تقريبي يمثل الحدود (اختياري لتعزيز الرؤية)
-# ملاحظة: هذه إحداثيات توضيحية فقط
-folium.PolyLine(
-    locations=[p["loc"] for p in border_points],
-    color="blue",
-    weight=2,
-    opacity=0.7
-).add_to(m)
+# 4. Strategic Monitoring Points
+points = [
+    {"name": "West: Maghnia", "coords": [34.845, -1.728]},
+    {"name": "South-West: Tindouf", "coords": [27.671, -8.147]},
+    {"name": "South: Bordj Badji Mokhtar", "coords": [21.328, 0.924]},
+    {"name": "South-East: In Guezzam", "coords": [19.572, 5.769]},
+    {"name": "East: Debdeb", "coords": [30.151, 9.458]}
+]
 
-# عرض الخريطة في Streamlit
-st_folium(m, width="100%", height=500)
+for p in points:
+    folium.Marker(
+        location=p["coords"], 
+        popup=p["name"], 
+        icon=folium.Icon(color='red', icon='eye-open')
+    ).add_to(m)
+
+# Display Map
+st_folium(m, width="100%", height=600)
+
+st.info("Chronological Earth Analysis (2020-2026) is pending Google Earth Engine API integration.")
