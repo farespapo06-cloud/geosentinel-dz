@@ -74,3 +74,23 @@ if st.session_state.all_detections:
     st.markdown("### 📋 سجل الأهداف المرصودة")
     df = pd.DataFrame(st.session_state.all_detections)
     st.dataframe(df[['id', 'time', 'lat', 'lon', 'type']], use_container_width=True)
+# هذا الكود يضاف داخل حلقة (for d in st.session_state.all_detections)
+for d in st.session_state.all_detections:
+    # تخصيص لون بناءً على نوع الرصد (OSINT أو حراري)
+    marker_color = "red" if not thermal_active else "orange"
+    
+    folium.CircleMarker(
+        location=[d["lat"], d["lon"]],
+        radius=12,
+        color=marker_color,
+        fill=True,
+        fill_color="yellow",
+        # إضافة معلومات تفصيلية تظهر عند النقر (Popup)
+        popup=folium.Popup(f"""
+            <b>Target ID:</b> {d['id']}<br>
+            <b>Time:</b> {d['time']}<br>
+            <b>Coordinates:</b> {round(d['lat'],2)}, {round(d['lon'],2)}<br>
+            <b>Status:</b> Verified via OSINT
+        """, max_width=200)
+    ).add_to(m)
+                  
