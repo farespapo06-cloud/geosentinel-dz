@@ -2,68 +2,75 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import random
+import pandas as pd
+from datetime import datetime
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
+# إعدادات الصفحة الاحترافية
+st.set_page_config(page_title="GeoSentinel-DZ | Strategic Command", layout="wide")
 
-# 2. الحفاظ على البيانات حتى عند الوميض
+# 1. تهيئة مخازن البيانات (التراكم اليدوي)
 if 'all_detections' not in st.session_state:
     st.session_state.all_detections = []
 
-# 3. دالة الخريطة - ثابتة تماماً (Static)
-@st.cache_resource
-def get_map():
-    # استخدام خريطة بسيطة وسريعة التحميل
-    tiles = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-    m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles=tiles, attr="Esri")
-    return m
-
+# 2. القائمة الجانبية: لوحة التحكم الاستراتيجية (كما في 1000046506_2.jpg)
 with st.sidebar:
-    st.title("🛡️ رصد الحدود")
-    if st.button("🛰️ مسح إضافي (تراكمي)"):
-        # إضافة هدف واحد جديد في كل مرة لتقليل الضغط
-        new_lat = random.uniform(22.0, 26.0)
-        new_lon = random.uniform(2.0, 6.0)
-        st.session_state.all_detections.append([new_lat, new_lon])
-        st.rerun()
+    st.title("⚙️ لوحة التحكم الاستراتيجي")
     
-    if st.button("🗑️ تنظيف الخريطة"):
+    st.subheader("📅 التحليل الزمني")
+    period = st.radio("الفترة:", ["الوضع الحالي (2026)", "الأرشيف (2020)", "التحليل العشري"])
+    
+    st.divider()
+    
+    st.subheader("🚨 أنظمة الرصد")
+    osint_active = st.toggle("🔗 تفعيل OSINT (التواصل الاجتماعي)", value=True)
+    air_active = st.toggle("✈️ رصد الملاحة الجوية والبحرية", value=True)
+    thermal_active = st.toggle("🌡️ تفعيل الرصد الحراري والليلي")
+    
+    st.divider()
+    
+    # زر المسح اليدوي (كما طلبت)
+    if st.button("🔍 إجراء مسح شامل الآن", use_container_width=True):
+        # إضافة هدف افتراضي لمحاكاة الرصد اليدوي
+        new_target = {
+            "id": len(st.session_state.all_detections) + 1,
+            "lat": random.uniform(21.0, 26.0),
+            "lon": random.uniform(0.0, 5.0),
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "type": "Target Detected"
+        }
+        st.session_state.all_detections.append(new_target)
+        st.rerun()
+
+    if st.button("🗑️ تنظيف سجل الرادار"):
         st.session_state.all_detections = []
         st.rerun()
 
-# 4. بناء الخريطة مع الأهداف بدون إعادة تحميل Tiles
-m = get_map()
+# 3. عرض حالة الخادم (كما في 1000046496_2.jpg)
+if air_active:
+    st.warning("⚠️ لا يستجيب حالياً OpenSky خادم. جاري العرض بدون بيانات الرادار الحي.")
 
-# إضافة الأهداف الحالية من الجلسة
-for point in st.session_state.all_detections:
+# 4. بناء الخريطة وتثبيت الأهداف (تطوير صور 1000046544.jpg)
+st.subheader(f"🗺️ خريطة الرصد العملياتي - {period}")
+
+# استخدام إحداثيات الجزائر كمركز
+m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr="Esri")
+
+# تثبيت الأهداف التراكمية
+for d in st.session_state.all_detections:
     folium.CircleMarker(
-        location=point,
-        radius=8,
+        location=[d["lat"], d["lon"]],
+        radius=10,
         color="red",
         fill=True,
         fill_color="yellow",
-        popup="Target Detected"
+        popup=f"ID: {d['id']} | Time: {d['time']}"
     ).add_to(m)
 
-# السر هنا: استخدام key ثابت ومنع الـ return_on_hover لتقليل التواصل مع السيرفر
-st_folium(
-    m, 
-    width="100%", 
-    height=550, 
-    key="fixed_geo_map", 
-    returned_objects=[] # هذا يمنع التحديث عند تحريك الخريطة باللمس
-)
+# عرض الخريطة مع منع الوميض الأبيض
+st_folium(m, width="100%", height=500, key="strategic_map", returned_objects=[])
 
-# عرض الجدول أسفل الخريطة (كما في صورك)
+# 5. سجل الأهداف (Table View)
 if st.session_state.all_detections:
-    st.write(f"✅ تم تثبيت {len(st.session_state.all_detections)} أهداف على الرادار.")
-# إضافة سجل نصي أسفل الخريطة لتوثيق الأهداف المرصودة تراكمياً
-import pandas as pd
-
-if st.session_state.all_detections:
-    st.markdown("### 📜 سجل الرصد الاستخباراتي")
-    # تحويل البيانات إلى جدول منظم
-    df = pd.DataFrame(st.session_state.all_detections, columns=['Latitude', 'Longitude'])
-    df['Status'] = 'Active Scan'
-    st.table(df) # يعرض الأهداف بشكل ثابت ومنظم
-    
+    st.markdown("### 📋 سجل الأهداف المرصودة")
+    df = pd.DataFrame(st.session_state.all_detections)
+    st.dataframe(df[['id', 'time', 'lat', 'lon', 'type']], use_container_width=True)
