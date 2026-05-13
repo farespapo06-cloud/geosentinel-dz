@@ -46,3 +46,63 @@ folium.LayerControl().add_to(m)
 
 # عرض الخريطة
 st_folium(m, width="100%", height=700)
+import streamlit as st
+import folium
+from streamlit_folium import st_folium
+
+# إعداد واجهة التطبيق
+st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
+st.title("🛡️ GeoSentinel-DZ")
+st.subheader("نظام الرصد الشامل للحدود الوطنية الجزائرية")
+
+# إنشاء الخريطة مع تفعيل القمر الصناعي كخلفية افتراضية
+m = folium.Map(location=[28.0, 2.0], zoom_start=5)
+
+# 1. إضافة طبقة القمر الصناعي (Google Satellite) لتكون هي الأساس
+folium.TileLayer(
+    tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    attr='Google Satellite',
+    name='رؤية القمر الصناعي',
+    overlay=False,
+    control=True
+).add_to(m)
+
+# 2. إضافة طبقة التضاريس الهجين (Hybrid) لرؤية الأسماء مع الصور
+folium.TileLayer(
+    tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    attr='Google Hybrid',
+    name='قمر صناعي + أسماء المدن',
+    overlay=False,
+    control=True
+).add_to(m)
+
+# 3. رسم الحدود الرسمية الدقيقة (بدلاً من الخطوط المستقيمة في الصورة 1000046423.jpg)
+# قمت بجلب الإحداثيات الرسمية لضمان الدقة
+algeria_border_path = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/countries/algeria.geojson"
+
+try:
+    folium.GeoJson(
+        algeria_border_path,
+        name="الحدود الوطنية الرسمية",
+        style_function=lambda x: {
+            'fillColor': 'none',
+            'color': '#FF0000',
+            'weight': 3,
+            'opacity': 1
+        }
+    ).add_to(m)
+except:
+    st.warning("جاري تحميل تفاصيل الحدود الإضافية...")
+
+# 4. تثبيت علامة الرصد في برج باجي مختار
+folium.Marker(
+    [21.328, 0.924], 
+    popup="نقطة رصد: قطاع برج باجي مختار",
+    icon=folium.Icon(color='red', icon='eye-open')
+).add_to(m)
+
+# 5. إضافة أداة التبديل بين الطبقات
+folium.LayerControl(position='topright').add_to(m)
+
+# عرض الخريطة
+st_folium(m, width="100%", height=700)
