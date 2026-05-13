@@ -1,81 +1,68 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import time
-from datetime import datetime
 import random
 import pandas as pd
+from datetime import datetime
 
-# --- 1. إعدادات الواجهة الاحترافية ---
+# --- 1. إعدادات الهوية البصرية ---
 st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
 
-# تصميم خاص للجدول ليتناسب مع الرؤية الليلية
-st.markdown("""
-    <style>
-    .stTable { background-color: #1a1c23; border-radius: 10px; color: #00ffcc; }
-    thead tr th { background-color: #2d2f39 !important; color: white !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 2. محرك الرادار (توليد بيانات مستقرة) ---
-def fetch_radar_targets():
+# --- 2. محرك بيانات الرادار الجوي ---
+def get_satellite_radar():
     targets = []
-    # توليد 5 أهداف في النطاق الجغرافي الجزائري
-    for i in range(5):
+    for i in range(6):
         targets.append({
-            "المعرف (ID)": f"DZ-{random.randint(100, 999)}",
-            "خط العرض": round(random.uniform(22.0, 35.0), 4),
-            "خط الطول": round(random.uniform(0.0, 8.0), 4),
-            "الارتفاع": f"{random.randint(18, 38)}k ft",
-            "السرعة": f"{random.randint(400, 520)} kn",
-            "الحالة": random.choice(["مستقر", "رصد نشط"])
+            "الهدف": f"TGT-{random.randint(100, 999)}",
+            "Lat": round(random.uniform(22.0, 32.0), 4),
+            "Lon": round(random.uniform(2.0, 7.0), 4),
+            "الارتفاع": f"{random.randint(200, 400)} FL",
+            "المصدر": "Satellite-Link"
         })
     return targets
 
-# --- 3. الشريط الجانبي (أدوات التحكم) ---
+# --- 3. لوحة التحكم الجانبية (Sidebar) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2561/2561374.png", width=70)
-    st.header("لوحة التحكم")
-    radar_active = st.toggle("تفعيل الرادار الجوي", value=True)
-    thermal_view = st.toggle("وضع الرؤية الحرارية")
+    st.header("🛰️ نظام الربط الفضائي")
+    # إضافة زر التحديث اليدوي لمنع الوميض التلقائي
+    refresh = st.button("🔄 تحديث المسح الجوي")
     st.divider()
-    st.info("نظام GeoSentinel يعمل الآن بأحدث بروتوكول استقرار لعام 2026.")
+    radar_on = st.toggle("تفعيل الرادار", value=True)
+    sat_view = st.toggle("رؤية القمر الصناعي (SATELLITE)", value=True)
+    st.info("نظام مستقر: تم إيقاف التحديث التلقائي لمنع الوميض.")
 
-# --- 4. العرض الرئيسي (الخريطة والوقت) ---
-st.title(f"🛡️ GeoSentinel-DZ | {datetime.now().strftime('%H:%M:%S')}")
+# --- 4. العرض الرئيسي (Main Interface) ---
+st.title(f"🛡️ GeoSentinel-DZ | Live Feed")
 
-# اختيار نمط الخريطة
-map_tiles = "CartoDB dark_matter"
-if thermal_view:
-    map_tiles = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+# اختيار نوع الخريطة (ربط الأقمار الصناعية)
+if sat_view:
+    map_type = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    attr = "Esri Satellite"
+else:
+    map_type = "CartoDB dark_matter"
+    attr = "CartoDB"
 
-# إنشاء الخريطة وتثبيت الموقع
-m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles=map_tiles, attr="GeoSentinel")
+m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles=map_type, attr=attr)
 
-# رسم الحدود الحمراء (كما في تصميمك الأصلي)
+# رسم الحدود الاستراتيجية (الخطوط الحمراء)
 folium.PolyLine([[19.0, -8.0], [37.0, -8.0], [37.0, 12.0], [19.0, 12.0], [19.0, -8.0]], 
-                color="red", weight=2, opacity=0.8).add_to(m)
+                color="red", weight=3, opacity=0.8).add_to(m)
 
-# جلب وعرض البيانات
-current_data = fetch_radar_targets()
+# جلب البيانات
+data = get_satellite_radar()
 
-if radar_active:
-    for target in current_data:
-        # إضافة أيقونة الطائرة مع دائرة نبضية حولها
-        folium.CircleMarker([target["خط العرض"], target["خط الطول"]], 
-                            radius=10, color="#00ffff", fill=True, fill_opacity=0.2).add_to(m)
-        folium.Marker([target["خط العرض"], target["خط الطول"]], 
-                      icon=folium.Icon(color="blue", icon="plane", prefix="fa")).add_to(m)
+if radar_on:
+    for t in data:
+        # إضافة مؤشرات الأهداف على الخريطة
+        folium.CircleMarker([t["Lat"], t["Lon"]], radius=12, color="cyan", pulse_color="white", fill=True).add_to(m)
+        folium.Marker([t["Lat"], t["Lon"]], 
+                      icon=folium.Icon(color="blue", icon="signal", prefix="fa"),
+                      popup=f"Target: {t['الهدف']}").add_to(m)
 
-# عرض الخريطة (استخدام مفتاح ثابت يمنع البياض)
-st_folium(m, width="100%", height=500, key="geosentinel_final_map")
+# عرض الخريطة (استخدام مفتاح ثابت لمنع بياض الشاشة)
+st_folium(m, width="100%", height=550, key="stable_sat_map")
 
-# --- 5. جدول البيانات المحدث ---
-st.subheader("📋 سجل الأهداف المرصودة")
-df = pd.DataFrame(current_data)
-st.table(df)
-
-# --- 6. آلية التحديث الصامت ---
-# تحديث كل 30 ثانية لضمان أعلى درجات الاستقرار على الهاتف
-time.sleep(30)
-st.rerun()
+# --- 5. جدول البيانات (أسفل الخريطة) ---
+st.divider()
+st.subheader("📋 سجل البيانات الفضائية")
+st.table(pd.DataFrame(data))
