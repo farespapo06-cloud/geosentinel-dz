@@ -13,41 +13,43 @@ if 'intelligence_data' not in st.session_state:
 
 # 2. مركز التحكم الاستخباراتي (القائمة الجانبية)
 with st.sidebar:
-    st.title("🛰️ GeoSentinel-DZ v2026")
-    st.header("الحدود الجزائرية (بر / جو / بحر)")
+    st.title("🛰️ GeoSentinel-DZ")
+    st.header("الأمن القومي: بر / جو / بحر")
     
     st.divider()
     
-    # تحليل التغيرات منذ 2020
-    st.subheader("⏳ تحليل الأقمار الصناعية")
-    timeline = st.select_slider("مقارنة التغيرات الميدانية منذ:", options=["2020", "2021", "2022", "2023", "2024", "2025", "2026"])
+    # تحليل التغيرات منذ 2020 (مقارنة الأقمار الصناعية)
+    st.subheader("⏳ تحليل التغيرات (منذ 2020)")
+    timeline = st.select_slider("عرض الحالة الأرضية لعام:", options=["2020", "2021", "2022", "2023", "2024", "2025", "2026"])
     
     st.divider()
     
-    # أنظمة التجسس والرصد
-    st.subheader("🚨 أنظمة الرصد النشطة")
-    sat_tracking = st.toggle("🛰️ ربط الأقمار الصناعية (وارث/Earth Engine)", value=True)
-    thermal_scan = st.toggle("🌡️ رصد حراري (معدات ثقيلة/مسيرات)", value=True)
-    terror_monitor = st.toggle("👤 ملاحقة الإرهاب والتهريب", value=True)
-    hidden_paths = st.toggle("👣 رصد التغيرات الأرضية والمسارات", value=True)
+    st.subheader("🚨 أنظمة الرصد الإقليمي")
+    sat_tracking = st.toggle("🛰️ ربط الأقمار الصناعية (وارث)", value=True)
+    thermal_scan = st.toggle("🌡️ كشف حراري (معدات ثقيلة/دبابات)", value=True)
+    terror_monitor = st.toggle("👤 ملاحقة الإرهاب (الساحل والمغرب العربي)", value=True)
+    border_encroachment = st.toggle("🚧 رصد الخنادق والمطارات الحدودية", value=True)
     
     st.divider()
     
     if st.button("📡 إجراء مسح استخباراتي شامل", use_container_width=True):
-        scenarios = {
-            "استحداث قاعدة جوية حدودية": {"color": "darkred", "cat": "بناء عسكري", "url": "https://www.reuters.com/world/africa/"},
-            "تحرك رتل عسكري (دبابات ومعدات)": {"color": "red", "cat": "تحرك عسكري", "url": "https://twitter.com/search?q=Algeria+Border+Security"},
-            "تسلل عبر مسارات مخفية": {"color": "purple", "cat": "إرهاب/تهريب", "url": "https://www.aljazeera.net/"},
-            "بناء خنادق وتحصينات جديدة": {"color": "brown", "cat": "تحصينات", "url": "https://www.france24.com/ar/"}
+        # قاعدة بيانات التهديدات محصورة جغرافياً في الجزائر والدول المجاورة فقط
+        regional_threats = {
+            "استحداث مطار عسكري (حدود ليبيا/النيجر)": {"color": "darkred", "cat": "بناء عسكري", "url": "https://www.reuters.com/world/africa/"},
+            "تحرك رتل عسكري (شمال مالي)": {"color": "red", "cat": "نشاط مسلح", "url": "https://www.aljazeera.net/news/maghreb/"},
+            "تسلل عبر خنادق مستحدثة (الحدود الغربية)": {"color": "orange", "cat": "تهريب/تسلل", "url": "https://www.france24.com/ar/tag/%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A/"},
+            "نشاط مشبوه في الصحراء الغربية": {"color": "purple", "cat": "رصد جيوسياسي", "url": "https://www.aps.dz/ar/algerie"},
+            "قاعدة إمداد جديدة (حدود موريتانيا)": {"color": "brown", "cat": "تحصينات", "url": "https://www.bbc.com/arabic/topics/cpz0ze2n1vmt"}
         }
-        event, details = random.choice(list(scenarios.items()))
+        event, details = random.choice(list(regional_threats.items()))
         
+        # حصر الإحداثيات داخل الجزائر وجوارها المباشر فقط
         entry = {
-            "ID": f"INTEL-DZ-{random.randint(1000, 9999)}",
+            "ID": f"DZ-INT-{random.randint(1000, 9999)}",
             "الحدث": event,
             "التصنيف": details['cat'],
-            "LAT": round(random.uniform(22.0, 36.0), 4),
-            "LON": round(random.uniform(-1.0, 9.0), 4),
+            "LAT": round(random.uniform(19.0, 36.0), 4), # من حدود مالي للوسط
+            "LON": round(random.uniform(-8.0, 11.0), 4), # من موريتانيا لليبيا
             "التوقيت": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "color": details['color'],
             "link": details['url']
@@ -56,55 +58,55 @@ with st.sidebar:
         st.rerun()
 
 # 3. واجهة العرض الرئيسية
-st.warning(f"⚠️ نظام الاستخبارات الجغرافية نشط | مقارنة البيانات من {timeline} | منصة FlightAware مدمجة")
+st.info(f"✅ نظام التجسس الجغرافي محصور في نطاق: الجزائر، تونس، ليبيا، مالي، النيجر، موريتانيا، الصحراء الغربية")
 
-col_intel, col_radars = st.columns([1.8, 1.2])
+col_intel, col_flight = st.columns([1.8, 1.2])
 
 with col_intel:
-    st.subheader("🗺️ خريطة الرصد الاستخباراتي والحدودي")
+    st.subheader("🗺️ خريطة الرصد الاستخباراتي (بر/بحر)")
     m = folium.Map(
         location=[28.0, 3.0], zoom_start=5,
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        attr="Satellite Intel Core"
+        attr="Sovereign Satellite"
     )
 
-    # رسم الحدود الجزائرية (الخط السيادي)
-    borders = [[37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]]
-    folium.PolyLine(borders, color="white", weight=3, dash_array='8, 8').add_to(m)
+    # رسم حدود الدول المعنية للتوضيح الاستخباراتي
+    algeria_zone = [[37.0, 8.5], [19.0, 5.0], [21.0, -8.0], [36.0, -2.0], [37.0, 8.5]]
+    folium.PolyLine(algeria_zone, color="cyan", weight=2, opacity=0.5).add_to(m)
 
     for d in st.session_state.intelligence_data:
-        popup_info = f"""
-        <div style='width: 200px; text-align: right;'>
+        popup_html = f"""
+        <div style='width: 200px; text-align: right; font-family: Arial;'>
             <h5 style='color:{d['color']};'>{d['الحدث']}</h5>
-            <p><b>الفئة:</b> {d['التصنيف']}</p>
+            <p style='font-size:12px;'><b>المكان:</b> {d['LAT']}, {d['LON']}</p>
+            <hr>
             <a href='{d['link']}' target='_blank'>
-                <button style='background:{d['color']}; color:white; border:none; padding:6px; width:100%; border-radius:4px;'>المصدر الاستخباري 🔗</button>
+                <button style='background:{d['color']}; color:white; border:none; padding:8px; border-radius:5px; width:100%; cursor:pointer;'>المصدر الإقليمي 🔗</button>
             </a>
         </div>
         """
         folium.CircleMarker(
-            location=[d["LAT"], d["LON"]],
-            radius=15, color=d["color"], weight=3, fill=True,
-            popup=folium.Popup(popup_info, max_width=250)
+            location=[d["LAT"], d["LON"]], radius=15, color=d["color"], weight=3, fill=True,
+            popup=folium.Popup(popup_html, max_width=250)
         ).add_to(m)
 
-    st_folium(m, width="100%", height=650, key="border_intel_map")
+    st_folium(m, width="100%", height=650, key="regional_intel_map")
 
-with col_radars:
-    # دمج FlightAware للرصد الجوي
+with col_flight:
+    # دمج FlightAware مع تركيز الإحداثيات على الجزائر (مركز 28, 3)
     st.subheader("✈️ الرصد الجوي (FlightAware)")
-    # استخدام خريطة FlightAware المباشرة للمنطقة
-    st.components.v1.iframe("https://ar.flightaware.com/live/map", height=320)
+    # الرابط الآن يفتح مباشرة على خريطة حية للمنطقة المعنية
+    st.components.v1.iframe("https://www.flightaware.com/live/map?lat=28.0&lon=3.0&zoom=5", height=320)
     
     st.divider()
     
-    # الرصد البحري (Marine Traffic)
-    st.subheader("🚢 الرصد البحري الحي")
-    st.components.v1.iframe("https://www.marinetraffic.com/en/ais/embed/zoom:5/centery:36.0/centerx:4.0/maptype:4", height=320)
+    # الرصد البحري (Marine Traffic) للسواحل الجزائرية
+    st.subheader("🚢 الرصد البحري (المتوسط)")
+    st.components.v1.iframe("https://www.marinetraffic.com/en/ais/embed/zoom:6/centery:37.0/centerx:4.0/maptype:4", height=320)
 
-# 4. سجل تحليل التهديدات
+# 4. سجل التهديدات
 if st.session_state.intelligence_data:
     st.markdown("---")
-    st.subheader("📋 سجل الرصد الشامل (تحركات المهربين، الإرهاب، والمعدات)")
+    st.subheader("📋 سجل الرصد الإقليمي (الجزائر ودول الجوار)")
     df = pd.DataFrame(st.session_state.intelligence_data)
     st.dataframe(df[['ID', 'الحدث', 'التصنيف', 'التوقيت', 'LAT', 'LON']], use_container_width=True)
