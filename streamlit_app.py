@@ -1,83 +1,120 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import random
 import pandas as pd
 from datetime import datetime
+import random
 
-# 1. الإعدادات وتثبيت الحالة
-st.set_page_config(page_title="GeoSentinel-DZ | Integrated Hub", layout="wide")
+# 1. إعدادات النظام السيادي الموحد
+st.set_page_config(page_title="الحدود الجزائرية (البرية، الجوية، البحرية)", layout="wide")
 
-if 'all_detections' not in st.session_state:
-    st.session_state.all_detections = []
+if 'intelligence_data' not in st.session_state:
+    st.session_state.intelligence_data = []
 
-# 2. القائمة الجانبية (القفلات كما في الصورة 1000046565.jpg)
+# 2. مركز التحكم الاستخباراتي (القائمة الجانبية)
 with st.sidebar:
-    st.title("⚙️ القيادة المركزية")
-    time_node = st.select_slider("تحليل التغيرات منذ 2024:", options=["2024", "2025", "2026"])
+    st.title("🛰️ نظام الرصد GeoSentinel-DZ")
+    st.header("الحدود الجزائرية (البرية، الجوية، البحرية)")
     
     st.divider()
-    st.subheader("🚨 أنظمة الرصد المتقدمة")
-    radar_active = st.toggle("🛰️ رادار مسح الحدود (مطارات/خنادق)", value=True)
-    thermal_active = st.toggle("🌡️ كشف ليلي حراري (مركبات كهربائية)", value=True)
-    stealth_active = st.toggle("👣 ملاحقة المسارات المخفية", value=True)
+    
+    # وحدة المقارنة الزمنية (تحليل التغيرات الأرضية)
+    st.subheader("⏳ تحليل الأقمار الصناعية (مقارنة)")
+    timeline = st.select_slider("عرض التغيرات الميدانية منذ عام:", options=["2020", "2021", "2022", "2023", "2024", "2025", "2026"])
     
     st.divider()
-    if st.button("🔍 إجراء مسح استخباراتي شامل", use_container_width=True):
-        threat_catalog = {
-            "مطار عسكري حدودي": {"color": "darkred", "img": "https://img.freepik.com/free-photo/military-airbase_181624-1.jpg", "link": "https://www.reuters.com/world/africa/"},
-            "خندق دفاعي مستحدث": {"color": "orange", "img": "https://img.freepik.com/free-photo/trench_181624-2.jpg", "link": "https://twitter.com/search?q=Border+News+Africa"},
-            "مسار تسلل (خارج الرادار)": {"color": "purple", "img": "https://img.freepik.com/free-photo/secret-path_181624-3.jpg", "link": "https://www.aljazeera.net/"},
-            "مركبة كهربائية (رصد حراري)": {"color": "cyan", "img": "https://img.freepik.com/free-photo/thermal-car_181624-4.jpg", "link": "https://www.france24.com/ar/"}
+    
+    # قفلات أنظمة التجسس والرصد الحديثة
+    st.subheader("🚨 أنظمة الرصد النشطة")
+    sat_tracking = st.toggle("🛰️ ربط الأقمار الصناعية (Earth Engine)", value=True)
+    thermal_scan = st.toggle("🌡️ رصد حراري ليلي (مركبات/معدات عسكرية)", value=True)
+    terror_monitor = st.toggle("👤 تتبع تحركات الإرهاب والتهريب", value=True)
+    hidden_paths = st.toggle("👣 كشف المسارات البشرية والأرضية", value=True)
+    
+    st.divider()
+    
+    # زر تحديث الرصد الاستخباري (الخوارزمية الشاملة)
+    if st.button("📡 إجراء مسح شامل للحدود", use_container_width=True):
+        # محاكاة لنتائج رصد الأقمار الصناعية والروابط العالمية
+        scenarios = {
+            "استحداث مطار عسكري حدودي": {"color": "darkred", "cat": "بناء هيكلي", "url": "https://www.reuters.com/world/africa/"},
+            "تحرك معدات عسكرية ثقيلة (دبابات)": {"color": "red", "cat": "تحرك عسكري", "url": "https://twitter.com/search?q=Military+Movements+Algeria"},
+            "تغير مسارات المهربين (رصد أرضي)": {"color": "orange", "cat": "تهريب", "url": "https://www.aljazeera.net/news/maghreb/"},
+            "بناء ثكنات / خنادق حدودية جديدة": {"color": "brown", "cat": "تحصينات", "url": "https://www.france24.com/ar/"},
+            "رصد مسيرة/مركبة (كشف حراري)": {"color": "cyan", "cat": "تسلل", "url": "https://www.bbc.com/arabic"}
         }
-        name, info = random.choice(list(threat_catalog.items()))
-        # تثبيت الإحداثيات على الجزائر والحدود حصراً
-        target = {
-            "ID": f"DZ-{random.randint(1000, 9999)}",
-            "النوع": name,
-            "LAT": round(random.uniform(22.0, 34.0), 4),
-            "LON": round(random.uniform(2.0, 7.0), 4),
-            "الوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "color": info['color'], "image": info['img'], "news_link": info['link']
+        event, details = random.choice(list(scenarios.items()))
+        
+        entry = {
+            "ID": f"INT-DZ-{random.randint(1000, 9999)}",
+            "الحدث": event,
+            "التصنيف": details['cat'],
+            "LAT": round(random.uniform(20.0, 36.5), 4),
+            "LON": round(random.uniform(-1.5, 9.5), 4),
+            "التوقيت": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "color": details['color'],
+            "link": details['url']
         }
-        st.session_state.all_detections.append(target)
+        st.session_state.intelligence_data.append(entry)
         st.rerun()
 
-# 3. واجهة العرض (دمج FlightRadar مع الخريطة الميدانية)
-st.success(f"✅ جميع الأنظمة مرتبطة | الرصد الحراري والمسارات نشطة | الموقع: الجزائر والحدود")
+# 3. واجهة العرض الرئيسية (الخرائط والرادارات)
+st.warning(f"⚠️ نظام التجسس الجغرافي نشط | مقارنة البيانات الاستخباراتية من {timeline} إلى 2026")
 
-# تقسيم الشاشة (الخريطة يسار | رادار الطيران يمين)
-col_map, col_flight = st.columns([1.8, 1.2])
+# تقسيم الشاشة (الميدان والحدود | الملاحة الجوية والبحرية)
+col_intel, col_radars = st.columns([2, 1])
 
-with col_map:
-    st.subheader("🗺️ خريطة الرصد وتغيرات الأرض")
-    m = folium.Map(location=[28.0, 3.0], zoom_start=5, tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr="Esri")
-    
-    # الحدود (الخط المقطع)
-    algeria_borders = [[37.0, 8.5], [19.0, 5.0], [21.0, -1.0], [37.0, 8.5]]
-    folium.PolyLine(algeria_borders, color="white", weight=2, dash_array='5, 5').add_to(m)
+with col_intel:
+    st.subheader("🗺️ خريطة الرصد الاستخباراتي والحدودي")
+    # استخدام طبقة الأقمار الصناعية (Satellite) لمحاكاة الرؤية الاستخباراتية
+    m = folium.Map(
+        location=[28.0, 3.0], zoom_start=5,
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Satellite Intel Core"
+    )
 
-    for d in st.session_state.all_detections:
-        popup_html = f"""
-        <div style="width: 180px; text-align: center;">
-            <b style="color:{d['color']};">{d['النوع']}</b><br>
-            <img src="{d['image']}" width="100%" style="border-radius:5px; margin:5px 0;">
-            <a href="{d['news_link']}" target="_blank">
-                <button style="background-color:{d['color']}; color:white; border:none; padding:5px; width:100%; border-radius:5px; cursor:pointer;">المصدر الاستخباري 🔗</button>
+    # رسم الحدود الجزائرية (الخط السيادي)
+    borders = [[37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], [21.0, -1.0], [27.0, -8.5], [35.5, -2.0], [37.0, 8.5]]
+    folium.PolyLine(borders, color="white", weight=3, dash_array='8, 8').add_to(m)
+
+    # إسقاط التهديدات والمعدات المكتشفة
+    for d in st.session_state.intelligence_data:
+        popup_info = f"""
+        <div style='width: 210px; text-align: right; font-family: Arial;'>
+            <h5 style='color:{d['color']}; margin-bottom:5px;'>{d['الحدث']}</h5>
+            <p style='font-size: 12px;'><b>الفئة:</b> {d['التصنيف']}</p>
+            <p style='font-size: 11px;'><b>الإحداثيات:</b> {d['LAT']}, {d['LON']}</p>
+            <hr>
+            <a href='{d['link']}' target='_blank'>
+                <button style='background:{d['color']}; color:white; border:none; padding:6px; border-radius:4px; width:100%; cursor:pointer;'>
+                    فتح المصدر العالمي 🔗
+                </button>
             </a>
         </div>
         """
-        folium.CircleMarker(location=[d["LAT"], d["LON"]], radius=12, color=d["color"], fill=True, popup=folium.Popup(popup_html)).add_to(m)
+        folium.CircleMarker(
+            location=[d["LAT"], d["LON"]],
+            radius=14, color=d["color"], weight=3,
+            fill=True, fill_color=d["color"], fill_opacity=0.5,
+            popup=folium.Popup(popup_info, max_width=300)
+        ).add_to(m)
 
-    st_folium(m, width="100%", height=550, key="dz_main_map")
+    st_folium(m, width="100%", height=650, key="main_border_intel")
 
-with col_flight:
-    st.subheader("✈️ رادار الطيران (Flight Live)")
-    # دمج الرادار الحي مباشرة
-    st.components.v1.iframe("https://www.flightradar24.com/simple_index.php?lat=28.0&lon=3.0&z=5", height=550)
-
-# 4. سجل العمليات
-if st.session_state.all_detections:
+with col_radars:
+    # رصد الطيران الجوي (FlightRadar24)
+    st.subheader("✈️ الرصد الجوي الحي")
+    st.components.v1.iframe("https://www.flightradar24.com/simple_index.php?lat=28.0&lon=3.0&z=5", height=320)
+    
     st.divider()
-    st.subheader("📋 السجل العملياتي الموحد")
-    st.dataframe(pd.DataFrame(st.session_state.all_detections)[['ID', 'النوع', 'LAT', 'LON', 'الوقت']], use_container_width=True)
+    
+    # رصد الملاحة البحرية (Marine Traffic)
+    st.subheader("🚢 الرصد البحري الحي")
+    st.components.v1.iframe("https://www.marinetraffic.com/en/ais/embed/zoom:5/centery:36.0/centerx:4.0/maptype:4", height=320)
+
+# 4. سجل تحليل التهديدات والمقارنة التاريخية
+if st.session_state.intelligence_data:
+    st.markdown("---")
+    st.subheader("📋 سجل الرصد الشامل (تحركات المهربين، الإرهاب، والمعدات العسكرية)")
+    df = pd.DataFrame(st.session_state.intelligence_data)
+    st.dataframe(df[['ID', 'الحدث', 'التصنيف', 'التوقيت', 'LAT', 'LON']], use_container_width=True)
