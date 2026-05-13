@@ -7,46 +7,42 @@ st.set_page_config(page_title="GeoSentinel-DZ", layout="wide")
 st.title("🛡️ GeoSentinel-DZ")
 st.subheader("نظام الرصد الشامل للحدود الوطنية الجزائرية")
 
-# إنشاء الخريطة مع تفعيل خيار القمر الصناعي
-# سنبدأ بالخريطة العادية ونضيف خيار التبديل (LayerControl)
-m = folium.Map(location=[28.0, 2.0], zoom_start=5, control_scale=True)
+# إنشاء الخريطة (مركزة على وسط الجزائر لرؤية الحدود كاملة)
+m = folium.Map(location=[28.0, 2.0], zoom_start=5)
 
-# إضافة طبقة القمر الصناعي (Google Satellite)
+# 1. إضافة طبقة القمر الصناعي الاحترافية
 folium.TileLayer(
     tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-    attr='Google',
-    name='القمر الصناعي (Satellite)',
+    attr='Google Satellite',
+    name='رؤية القمر الصناعي',
     overlay=False,
     control=True
 ).add_to(m)
 
-# إضافة طبقة الخريطة العادية
+# 2. إضافة طبقة الخريطة العادية كخيار ثانٍ
 folium.TileLayer('OpenStreetMap', name='الخريطة العادية').add_to(m)
 
-# جلب حدود الجزائر (GeoJSON) ورسمها بخط أحمر
-# هذا الرابط يحتوي على إحداثيات حدود الجزائر بدقة
-algeria_border_url = "https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries/DZA.geojson"
+# 3. حل مشكلة الصورة 1000046422.jpg: رسم الحدود الوطنية
+# استخدمنا إحداثيات مبسطة وموثوقة لضمان عدم حدوث خطأ JSON
+algeria_border = [[37.0, -2.0], [37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.5, 5.0], [21.0, -4.5], [27.5, -8.5], [35.0, -2.0]]
 
-folium.GeoJson(
-    algeria_border_url,
-    name="الحدود الوطنية",
-    style_function=lambda x: {
-        'fillColor': 'none',
-        'color': 'red',
-        'weight': 4,
-        'opacity': 0.7
-    }
+folium.PolyLine(
+    locations=algeria_border,
+    color="red",
+    weight=5,
+    opacity=0.8,
+    tooltip="الحدود الوطنية الجزائرية"
 ).add_to(m)
 
-# إضافة علامة برج باجي مختار كما في الصورة 1000046421.jpg
+# 4. علامة قطاع برج باجي مختار
 folium.Marker(
     [21.328, 0.924], 
-    popup="قطاع برج باجي مختار",
-    icon=folium.Icon(color='red', icon='info-sign')
+    popup="قطاع برج باجي مختار العملياتي",
+    icon=folium.Icon(color='red', icon='screenshot')
 ).add_to(m)
 
-# إضافة أداة التحكم للتبديل بين القمر الصناعي والخريطة العادية
-folium.LayerControl(position='topright').add_to(m)
+# 5. أداة التبديل بين القمر الصناعي والخريطة (في أعلى اليمين)
+folium.LayerControl().add_to(m)
 
-# عرض الخريطة بكامل عرض الشاشة
+# عرض الخريطة
 st_folium(m, width="100%", height=700)
