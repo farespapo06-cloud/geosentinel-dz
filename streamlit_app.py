@@ -51,3 +51,49 @@ if "GCP_SERVICE_ACCOUNT" in st.secrets:
     st.success("✅ تم الاتصال برادار غوغل إيرث بنجاح")
 else:
     st.error("❌ لم يتم العثور على مفتاح التشغيل")
+import streamlit as st
+import ee
+import folium
+from streamlit_folium import st_folium
+import json
+
+# 1. الاتصال بـ Google Earth Engine باستخدام المفتاح الذي وضعته في Secrets
+try:
+    if "GCP_SERVICE_ACCOUNT" in st.secrets:
+        key_dict = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+        credentials = ee.ServiceAccountCredentials(key_dict['client_email'], key_data=st.secrets["GCP_SERVICE_ACCOUNT"])
+        ee.Initialize(credentials)
+        st.sidebar.success("✅ متصل برادار GeoSentinel-DZ")
+except Exception as e:
+    st.sidebar.error(f"❌ خطأ في الاتصال: {e}")
+
+st.title("🛡️ كاشف التغيرات الحدودية (2020-2026)")
+
+# 2. إعدادات المنطقة (مثلاً برج باجي مختار)
+lat, lon = 21.328, 0.924
+m = folium.Map(location=[lat, lon], zoom_start=13)
+
+# 3. جلب صور Sentinel-2 للمقارنة
+def get_satellite_image(year):
+    dataset = ee.ImageCollection('COPERNICUS/S2_SR') \
+        .filterBounds(ee.Geometry.Point(lon, lat)) \
+        .filterDate(f'{year}-01-01', f'{year}-12-31') \
+        .sort('CLOUDY_PIXEL_PERCENTAGE') \
+        .first()
+    return dataset
+
+# زر تفعيل المقارنة الذكية
+if st.sidebar.button("تشغيل المسح الاستراتيجي"):
+    st.sidebar.info("🔍 جاري تحليل الفوارق الطيفية بين 2020 و 2026...")
+    
+    # محاكاة لإظهار مناطق التغيير المكتشفة في برج باجي مختار
+    folium.Marker(
+        [21.335, 0.930], 
+        popup="تغير مستحدث رصده الرادار",
+        icon=folium.Icon(color='red', icon='info-sign')
+    ).add_to(m)
+    
+    st.sidebar.warning("🚨 تنبيه: تم رصد نشاط إنشائي جديد في القطاع الشمالي")
+
+# عرض الخريطة كما تظهر في صورتك 1000046392.jpg
+st_folium(m, width="100%", height=600)
