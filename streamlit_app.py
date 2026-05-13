@@ -2,10 +2,10 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 
-# إعداد الصفحة
+# إعداد الصفحة وتوسيع العرض
 st.set_page_config(layout="wide", page_title="GeoSentinel-DZ")
 
-# إدارة الحالة لتجنب فقدان البيانات
+# إدارة حالة التهديدات والمسارات
 if 'threats' not in st.session_state:
     st.session_state.threats = []
 
@@ -17,39 +17,39 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # زر المسح الشامل (تم إصلاح الكود بالكامل)
+    # زر المسح الشامل (تم إصلاح منطق التهديدات)
     if st.button("🔍 إجراء مسح استخباراتي شامل"):
         st.session_state.threats = [
             {"loc": [21.32, 0.95], "type": "تحرك بري مشبوه", "icon": "truck"},
             {"loc": [37.20, 7.50], "type": "هدف بحري مجهول", "icon": "ship"},
             {"loc": [25.10, 9.10], "type": "نشاط غير قانوني", "icon": "bullseye"}
         ]
-        st.warning("تم رصد أهداف جديدة على الحدود")
+        st.warning("تم تحديد أهداف استراتيجية جديدة")
 
     show_flights = st.toggle("✈️ رادار الطيران (FlightRadar24)", value=True)
 
 # --- الخريطة الرئيسية ---
 m = folium.Map(location=[28.0, 2.0], zoom_start=5, tiles="Esri World Imagery")
 
-# 1. رسم الحدود الوطنية (البرية والبحرية)
+# 1. رسم الحدود الوطنية (البرية والبحرية) بخط واضح
 algeria_border = [
     [37.0, 8.5], [30.0, 9.5], [23.5, 12.0], [19.0, 5.0], 
     [21.0, -4.5], [27.0, -8.5], [35.5, -2.0], [36.5, -1.0], 
     [37.5, 2.0], [38.0, 5.0], [37.0, 8.5]
 ]
-folium.PolyLine(algeria_border, color="yellow", weight=5, dash_array='10').add_to(m)
+folium.PolyLine(algeria_border, color="yellow", weight=5, dash_array='10', tooltip="الحدود الوطنية").add_to(m)
 
-# 2. تحديث المسارات المخفية (👣) - مسارات متعرجة جديدة
+# 2. تغيير وتحديث المسارات المخفية (👣) - مسارات تكتيكية جديدة
 if track_hidden:
-    # مسار جنوبي (برج باجي مختار)
-    path_south = [[19.5, 3.0], [20.2, 2.5], [21.0, 1.8], [21.5, 1.0]]
-    folium.PolyLine(path_south, color="purple", weight=3, dash_array='5', tooltip="مسار مخفي مرصود").add_to(m)
+    # مسار جنوبي متعرج (منطقة برج باجي مختار)
+    path_south = [[19.5, 3.2], [20.0, 2.8], [20.8, 2.1], [21.3, 1.2], [21.8, 0.8]]
+    folium.PolyLine(path_south, color="purple", weight=4, dash_array='5', tooltip="مسار تسلل مرصود").add_to(m)
     
-    # مسار حدودي شرقي
-    path_east = [[24.0, 9.5], [25.5, 9.2], [26.8, 8.8]]
-    folium.PolyLine(path_east, color="purple", weight=3, dash_array='5').add_to(m)
+    # مسار شرقي وعر (ناحية الحدود مع تونس/ليبيا)
+    path_east = [[24.5, 9.8], [25.8, 9.3], [27.2, 9.0], [28.5, 8.5]]
+    folium.PolyLine(path_east, color="purple", weight=4, dash_array='5', tooltip="نشاط مسار خلفي").add_to(m)
 
-# 3. إضافة التهديدات المكتشفة
+# 3. إظهار التهديدات (الأيقونات الحمراء)
 for threat in st.session_state.threats:
     folium.Marker(
         location=threat["loc"],
@@ -58,12 +58,13 @@ for threat in st.session_state.threats:
     ).add_to(m)
 
 # عرض الخريطة
-st.subheader("خريطة الرصد العملياتي والحدود الوطنية")
+st.subheader("خريطة الرصد العملياتي والحدود")
 st_folium(m, width="100%", height=500)
 
-# 4. رادار الطيران (FlightRadar24)
+# 4. رادار الطيران المباشر
 if show_flights:
     st.markdown("---")
     st.subheader("✈️ رادار الطيران المباشر")
+    # تضمين نافذة FlightRadar24
     url = "https://www.flightradar24.com/simple_index.php?lat=28.0&lon=2.0&z=5"
-    st.components.v1.iframe(url, height=500)
+    st.components.v1.iframe(url, height=500, scrolling=True)
