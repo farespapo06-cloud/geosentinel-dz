@@ -111,3 +111,36 @@ if "GCP_SERVICE_ACCOUNT" in st.secrets:
     st.success("✅ تم الاتصال برادار غوغل إيرث بنجاح")
 else:
     st.error("❌ مفتاح التشغيل غير موجود")
+import streamlit as st
+import ee
+import folium
+from streamlit_folium import st_folium
+import json
+
+# 1. التحقق من المفتاح السري الذي وضعته في الإعدادات
+if "GCP_SERVICE_ACCOUNT" in st.secrets:
+    try:
+        # تحويل النص إلى تنسيق JSON
+        info = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+        # إنشاء تصريح المرور لغوغل إيرث
+        credentials = ee.ServiceAccountCredentials(info['client_email'], key_data=st.secrets["GCP_SERVICE_ACCOUNT"])
+        ee.Initialize(credentials)
+        st.success("✅ تم الاتصال برادار غوغل إيرث بنجاح")
+    except Exception as e:
+        st.error(f"❌ خطأ في التشفير: {e}")
+else:
+    st.error("❌ مفتاح التشغيل غير موجود في Secrets")
+
+# 2. إعداد الخريطة لبرج باجي مختار
+lat, lon = 21.328, 0.924
+m = folium.Map(location=[lat, lon], zoom_start=12)
+
+# إضافة علامة في منطقة التغيير المكتشفة
+folium.Marker(
+    [21.335, 0.930], 
+    popup="تغير مستحدث رصده الرادار",
+    icon=folium.Icon(color='red')
+).add_to(m)
+
+# 3. عرض الخريطة النهائية
+st_folium(m, width=700, height=500)
